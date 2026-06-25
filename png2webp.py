@@ -93,6 +93,51 @@ def generate_webp_exif(img, prompt, workflow):
         print(f"Error creating native EXIF: {e}")
         return None
 
+def set_creation_time_windows(file_path, timestamp):
+    """
+    Sets the creation time of a file on Windows.
+    `timestamp` is a Unix epoch timestamp (seconds since Jan 1, 1970).
+    """
+    import ctypes
+    from ctypes import wintypes
+    
+    # Windows FILETIME is 100-nanosecond intervals since January 1, 1601 (UTC).
+    # 11644473600 is the difference in seconds between 1601 and 1970.
+    filetime_val = int((timestamp + 11644473600) * 10000000)
+    
+    # Split the 64-bit value into low and high 32-bit parts
+    low = filetime_val & 0xFFFFFFFF
+    high = (filetime_val >> 32) & 0xFFFFFFFF
+    ft_creation = wintypes.FILETIME(low, high)
+    
+    # Open handle to the file with GENERIC_WRITE access
+    handle = ctypes.windll.kernel32.CreateFileW(
+        str(file_path),
+        0x40000000, # GENERIC_WRITE
+        0x00000007, # FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE
+        None,
+        3,          # OPEN_EXISTING
+        0x02000000, # FILE_FLAG_BACKUP_SEMANTICS
+        None
+    )
+    
+    if handle == -1 or handle == wintypes.HANDLE(-1).value:
+        raise ctypes.WinError()
+        
+    try:
+        # SetFileTime(hFile, lpCreationTime, lpLastAccessTime, lpLastWriteTime)
+        # Passing None for access and write times leaves them unchanged
+        success = ctypes.windll.kernel32.SetFileTime(
+            handle,
+            ctypes.byref(ft_creation),
+            None,
+            None
+        )
+        if not success:
+            raise ctypes.WinError()
+    finally:
+        ctypes.windll.kernel32.CloseHandle(handle)
+
 def convert_png_to_webp(png_path, quality=85, overwrite=False, delete_source=False, dry_run=False, verbose=False, webp_path=None, preserve_timestamp=False):
     """
     Converts a single PNG file to WebP format, extracting and embedding ComfyUI workflow/prompt metadata.
@@ -167,6 +212,11 @@ def convert_png_to_webp(png_path, quality=85, overwrite=False, delete_source=Fal
         if preserve_timestamp and not dry_run:
             try:
                 os.utime(webp_path, (src_stat.st_atime, src_stat.st_mtime))
+                if os.name == 'nt':
+                    try:
+                        set_creation_time_windows(webp_path, src_stat.st_ctime)
+                    except Exception as win_err:
+                        print(f"[WARNING] Failed to preserve creation timestamp for {webp_path.name}: {win_err}")
             except Exception as e:
                 print(f"[WARNING] Failed to preserve timestamps for {webp_path.name}: {e}")
         

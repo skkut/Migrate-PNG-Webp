@@ -258,11 +258,18 @@ def main():
             src_stat = png_path.stat()
             dest_stat = dest_webp_path.stat()
             mtime_diff = abs(dest_stat.st_mtime - src_stat.st_mtime)
-            if mtime_diff < 0.1:
+            ctime_preserved = True
+            ctime_diff = 0.0
+            if os.name == 'nt':
+                ctime_diff = abs(dest_stat.st_ctime - src_stat.st_ctime)
+                ctime_preserved = ctime_diff < 0.1
+                
+            if mtime_diff < 0.1 and ctime_preserved:
                 cli_preserve_count += 1
-                print(f"    [OK] CLI preserved timestamps for {relative_path}")
+                ctime_str = f", ctime diff={ctime_diff:.4f}s" if os.name == 'nt' else ""
+                print(f"    [OK] CLI preserved timestamps for {relative_path} (mtime diff={mtime_diff:.4f}s{ctime_str})")
             else:
-                print(f"    [FAIL] CLI timestamps mismatch for {relative_path}: src_mtime={src_stat.st_mtime}, dest_mtime={dest_stat.st_mtime}")
+                print(f"    [FAIL] CLI timestamps mismatch for {relative_path}: src_mtime={src_stat.st_mtime}, dest_mtime={dest_stat.st_mtime}, src_ctime={src_stat.st_ctime}, dest_ctime={dest_stat.st_ctime}")
             
     print(f"\nMultiprocessing CLI Test: {cli_success_count}/{len(png_files)} files processed, {cli_preserve_count}/{len(png_files)} preserved timestamps.")
     
@@ -310,11 +317,18 @@ def main():
         dest_mtime = dest_stat.st_mtime
         
         mtime_diff = abs(dest_mtime - src_mtime)
-        if mtime_diff < 0.1:
-            print(f"  [OK] Timestamps preserved for {png_path.name} (diff mtime={mtime_diff:.4f}s)")
+        ctime_preserved = True
+        ctime_diff = 0.0
+        if os.name == 'nt':
+            ctime_diff = abs(dest_stat.st_ctime - src_stat.st_ctime)
+            ctime_preserved = ctime_diff < 0.1
+            
+        if mtime_diff < 0.1 and ctime_preserved:
+            ctime_str = f", diff ctime={ctime_diff:.4f}s" if os.name == 'nt' else ""
+            print(f"  [OK] Timestamps preserved for {png_path.name} (diff mtime={mtime_diff:.4f}s{ctime_str})")
             preserve_success_count += 1
         else:
-            print(f"  [FAIL] Timestamps NOT preserved for {png_path.name}. Source mtime: {src_mtime}, Dest mtime: {dest_mtime}")
+            print(f"  [FAIL] Timestamps NOT preserved for {png_path.name}. Source mtime: {src_mtime}, Dest mtime: {dest_mtime}. Source ctime: {src_stat.st_ctime}, Dest ctime: {dest_stat.st_ctime}")
             
         # Clean up
         if webp_path.exists():
