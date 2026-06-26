@@ -71,9 +71,13 @@ jobs:
         with:
           path: artifacts
 
+      - name: Debug - List downloaded artifacts
+        run: |
+          ls -R artifacts
+
       - name: Prepare assets for release
         run: |
-          mkdir release-assets
+          mkdir -p release-assets
           
           # Package Windows
           cd artifacts/png2webp-windows
@@ -94,7 +98,8 @@ jobs:
 
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v3
-
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: |
             release-assets/png2webp-windows.zip
@@ -103,4 +108,5 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: true
+
 
