@@ -16,3 +16,7 @@ dist/
 
 # Local test directories
 test_images/
+
+# Agent configuration/cache
+.agents/
+
