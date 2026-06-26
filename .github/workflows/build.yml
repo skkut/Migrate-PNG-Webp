@@ -1,0 +1,99 @@
+name: Build and Release Binaries
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: png2webp-linux
+            asset_name: png2webp
+          - os: windows-latest
+            artifact_name: png2webp-windows
+            asset_name: png2webp.exe
+          - os: macos-latest
+            artifact_name: png2webp-macos
+            asset_name: png2webp
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build binary with PyInstaller
+        run: |
+          pyinstaller --clean -y png2webp.spec
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: dist/${{ matrix.asset_name }}
+          if-no-files-found: error
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Prepare assets for release
+        run: |
+          mkdir release-assets
+          
+          # Package Windows
+          cd artifacts/png2webp-windows
+          zip ../../release-assets/png2webp-windows.zip png2webp.exe
+          cd ../..
+          
+          # Package Linux
+          cd artifacts/png2webp-linux
+          chmod +x png2webp
+          tar -czf ../../release-assets/png2webp-linux.tar.gz png2webp
+          cd ../..
+          
+          # Package macOS
+          cd artifacts/png2webp-macos
+          chmod +x png2webp
+          tar -czf ../../release-assets/png2webp-macos.tar.gz png2webp
+          cd ../..
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release-assets/png2webp-windows.zip
+            release-assets/png2webp-linux.tar.gz
+            release-assets/png2webp-macos.tar.gz
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+
