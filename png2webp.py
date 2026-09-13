@@ -249,20 +249,39 @@ def format_size(bytes_size):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Migrate ComfyUI PNG images to WebP format, preserving visual workflow & prompt metadata in EXIF.",
-        usage="%(prog)s [-h] [-q QUALITY] [-r] [-o] [-d] [--dry-run] [-v] [-f DESTINATION] [-w WORKERS] [-p] [path]"
+        prog='png2webp',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=(
+            'Migrate ComfyUI PNG images to WebP format, preserving visual workflow & '
+            'prompt metadata in EXIF.\n'
+            '\n'
+            'Converts PNG files in a folder (optionally recursive) to lossy WebP images '
+            'while embedding the ComfyUI prompt and workflow JSON into EXIF tags, so the '
+            'converted WebP files remain loadable in ComfyUI via drag-and-drop.'
+        ),
+        epilog=(
+            'examples:\n'
+            '  png2webp                      Convert all PNGs in the current directory\n'
+            '  png2webp --dry-run            Preview what would happen without writing files\n'
+            '  png2webp images -r -o -d -v   Recursive, overwrite, delete sources, verbose\n'
+            '  png2webp images -f out -r -p  Write to a separate folder, preserve timestamps\n'
+            '  png2webp -q 90 -w 4           Use quality 90 with 4 parallel workers\n'
+            '\n'
+            'By default, existing WebP files are skipped and source PNGs are kept.\n'
+            'Use --dry-run to preview changes before converting.'
+        ),
     )
     parser.add_argument(
         'path',
         nargs='?',
         default='.',
-        help='Directory path to scan for PNG files (defaults to current directory).'
+        help='Directory path to scan for PNG files (default: current directory).'
     )
     parser.add_argument(
         '-q', '--quality',
         type=int,
         default=85,
-        help='Compression quality (1-100, default: 85).'
+        help='Compression quality from 1 to 100 (default: 85).'
     )
     parser.add_argument(
         '-r', '--recursive',
@@ -272,12 +291,12 @@ def main():
     parser.add_argument(
         '-o', '--overwrite',
         action='store_true',
-        help='Overwrite existing WebP files.'
+        help='Overwrite existing WebP files (default: skip them).'
     )
     parser.add_argument(
         '-d', '--delete-source',
         action='store_true',
-        help='Delete original PNG files after successful conversion.'
+        help='Delete original PNG files after successful conversion (default: keep them).'
     )
     parser.add_argument(
         '--dry-run',
@@ -293,13 +312,13 @@ def main():
         '-f', '--destination',
         type=str,
         default=None,
-        help='Destination folder to save the output WebP images.'
+        help='Destination folder for the output WebP images (keeps the relative folder structure).'
     )
     parser.add_argument(
         '-w', '--workers',
         type=int,
         default=None,
-        help='Number of parallel worker processes to use (defaults to CPU count).'
+        help='Number of parallel worker processes (default: min(4, CPU count)).'
     )
     parser.add_argument(
         '-p', '--preserve',

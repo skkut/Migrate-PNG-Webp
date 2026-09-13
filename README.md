@@ -51,10 +51,13 @@ python png2webp.py [path] [options]
 .\venv\Scripts\python png2webp.py [path] [options]
 ```
 
+Run `-h` (or `--help`) at any time to display the built-in help page: an overview of the tool, every parameter with its default, and usage examples.
+
 ### CLI Arguments
 
 | Argument | Shorthand | Description |
 | :--- | :--- | :--- |
+| `--help` | `-h` | Display the built-in help page with an overview of all parameters, their defaults, and usage examples. |
 | `path` | | Directory containing PNG files to convert. Defaults to the current directory (`.`). |
 | `--destination` | `-f` | Destination directory to save the output WebP images (retains nested subdirectory structure if `--recursive` is enabled). |
 | `--quality` | `-q` | Compression quality for the WebP output from `1` to `100`. (Default: `85`). |
