@@ -12,7 +12,6 @@ ENV/
 # PyInstaller / packaging
 build/
 dist/
-*.spec
 
 # Local test directories
 test_images/
