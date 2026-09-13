@@ -66,6 +66,9 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
@@ -105,8 +108,9 @@ jobs:
             release-assets/png2webp-windows.zip
             release-assets/png2webp-linux.tar.gz
             release-assets/png2webp-macos.tar.gz
+          body_path: build/release_notes_v1_1.md
+          generate_release_notes: false
           draft: false
           prerelease: false
-          generate_release_notes: true
 
 

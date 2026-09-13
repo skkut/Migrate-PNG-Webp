@@ -10,7 +10,8 @@ env/
 ENV/
 
 # PyInstaller / packaging
-build/
+build/*
+!build/release_notes_*.md
 dist/
 
 # Local test directories
