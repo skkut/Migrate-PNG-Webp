@@ -6,7 +6,7 @@ This utility is adapted from the [ComfyUI-SaveCompressed-Weppy](https://github.c
 
 ## Features
 
-- **WebP Compression**: Saves storage space by converting PNGs to compressed WebPs at customizable quality settings (default: 85% quality, lossy).
+- **WebP Compression**: Saves storage space by converting PNGs to compressed WebPs at customizable quality settings (default: 85% quality, lossy). >90% storage space saving compared to PNG files.
 - **Metadata Preservation**: Extracts ComfyUI visual graph workflows and API prompts from PNG text chunks and embeds them into standard WebP EXIF tags (`Make` and `ImageDescription`), enabling ComfyUI to read workflows from the resulting WebP files via drag-and-drop.
 - **EXIF Size Protection**: Automatically filters out heavy base64 data URIs (like embedded input images or masks) from the workflow JSON to prevent EXIF chunk length overflows.
 - **Dry-run Mode**: Preview conversion operations, file count, and estimated space savings without writing any files or modifying directories.
